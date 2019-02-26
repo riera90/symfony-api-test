@@ -16,5 +16,6 @@ ADD . /app
 WORKDIR /app
 # Finally init.sh is launched to install dependencies, configure .env and launch the server
 CMD composer install && \
-sed -i -r 's,(DATABASE_URL=).*,\1'"$DATABASE_URL"',' ./.env && \
+cp .env .env.local && \
+sed -i -r 's,(DATABASE_URL=).*,\1'"$DATABASE_URL"',' ./.env.local && \
 ./bin/console server:run 0.0.0.0:8000

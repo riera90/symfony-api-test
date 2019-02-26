@@ -16,8 +16,9 @@ COPY . /app
 WORKDIR /app
 # Finally init.sh is launched to install dependencies, configure .env and launch the server
 CMD composer install && \
-sed -i -r 's,(DATABASE_URL=).*,\1'"$DATABASE_URL"',' ./.env && \
-sed -i -r 's,(APP_ENV=).*,\1'"$ENV"',' ./.env && \
+cp .env .env.local && \
+sed -i -r 's,(DATABASE_URL=).*,\1'"$DATABASE_URL"',' ./.env.local && \
+sed -i -r 's,(APP_ENV=).*,\1'"$ENV"',' ./.env.local && \
 sed -i -r 's,(.*)(driver: ).*,\1\2'"$DRIVER"',' ./config/packages/doctrine.yaml && \
 sed -i -r 's,(.*)( charset: ).*,\1\2'"$CHARSET"',' ./config/packages/doctrine.yaml && \
 sed -i -r 's,(.*)(collate: ).*,\1\2'"$COLLATE"',' ./config/packages/doctrine.yaml && \
