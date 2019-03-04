@@ -5,8 +5,8 @@ services:
     image: postgres:11.0
     restart: always
     volumes:
-      - ./backup/arenas/bd/config/my-postgres.conf:/etc/postgresql/postgresql.conf:z
-      - ./backup/arenas/bd/data:/var/lib/postgresql/data:z
+      - ./backup/api_staging/bd/config/my-postgres.conf:/etc/postgresql/postgresql.conf:z
+      - ./backup/api_staging/bd/data:/var/lib/postgresql/data:z
     environment:
       - POSTGRES_PASSWORD=password
       - POSTGRES_USER=admin
