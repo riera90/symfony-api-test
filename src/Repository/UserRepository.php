@@ -24,6 +24,12 @@ class UserRepository extends ServiceEntityRepository
         $this->_em->flush();
     }
 
+    public function modify(?User $user)
+    {
+        $this->_em->persist($user);
+        $this->_em->flush();
+    }
+
     // /**
     //  * @return User[] Returns an array of User objects
     //  */

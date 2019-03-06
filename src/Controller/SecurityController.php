@@ -13,8 +13,12 @@ use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 
 class SecurityController extends AbstractController
 {
+    private function getTokenLenght(){
+        return 8;
+    }
+
     /**
-     * @Route("/register", name="register")
+     * @Route("/api/register", name="register")
      */
     public function register(Request $request, UserPasswordEncoderInterface $encoder, UserRepository $userRepository)
     {
@@ -39,14 +43,14 @@ class SecurityController extends AbstractController
         $user->setUsername($request->headers->get('username'));
         $plainTextPassword = $request->headers->get('password');
         $user->setPassword($encoder->encodePassword($user, $plainTextPassword));
-        $user->setApiToken(bin2hex(openssl_random_pseudo_bytes($tokenLength)));
+        $user->setApiToken(bin2hex(openssl_random_pseudo_bytes($this->getTokenLenght())));
 
 
         // checks for a valid state in the user, if not an error is returned
         // an unstable object might be an already existing api key, or username
 
         while ( $userRepository->findBy(array('apiToken' => $user->getApiToken())) ){
-            $user->setApiToken(bin2hex(openssl_random_pseudo_bytes($tokenLength)));
+            $user->setApiToken(bin2hex(openssl_random_pseudo_bytes($this->getTokenLenght())));
         }
         if ( $userRepository->findBy(array('username' => $user->getUsername())) ){
             $data = [
@@ -81,14 +85,14 @@ class SecurityController extends AbstractController
 
 
     /**
-     * @Route("/login", name="login")
+     * @Route("/api/login", name="login")
      */
     public function login(Request $request, UserPasswordEncoderInterface $encoder, UserRepository $userRepository)
     {
         $password = $request->headers->get('password');
         $username = $request->headers->get('username');
 
-        $user = $userRepository->findOneBy(array('username' => $username));
+        $user = $userRepository->findOneBy(array('apiToken' => $username));
 
 
         if ( !$user or !$encoder->isPasswordValid($user, $password) ){
@@ -97,6 +101,49 @@ class SecurityController extends AbstractController
             ];
             return new JsonResponse($data, Response::HTTP_FORBIDDEN);
         }
+
+        $data = [
+            'username' => $user->getUsername(),
+            'X-AUTH-TOKEN' => $user->getApiToken(),
+        ];
+
+        return new JsonResponse($data, Response::HTTP_OK);
+    }
+
+
+    /**
+     * @Route("/api/modify", name="modify")
+     */
+    public function modify(Request $request, UserPasswordEncoderInterface $encoder, UserRepository $userRepository)
+    {
+        $plainTextPassword = $request->headers->get('password');
+        $token = $request->headers->get('X-AUTH-TOKEN');
+
+        $user = $userRepository->findOneBy(array('apiToken' => $token));
+
+        if ( !$user ){
+            $data = [
+                'message' => 'invalid token',
+            ];
+            return new JsonResponse($data, Response::HTTP_FORBIDDEN);
+        }
+
+        if ( $plainTextPassword ){
+            $user->setPassword($encoder->encodePassword($user, $plainTextPassword));
+        }
+
+
+        $user->setApiToken(bin2hex(openssl_random_pseudo_bytes($this->getTokenLenght())));
+
+
+        // checks for a valid state in the user, if not an error is returned
+        // an unstable object might be an already existing api key, or username
+
+        while ( $userRepository->findBy(array('apiToken' => $user->getApiToken())) ){
+            $user->setApiToken(bin2hex(openssl_random_pseudo_bytes($this->getTokenLenght())));
+        }
+
+        $userRepository->modify($user);
 
         $data = [
             'username' => $user->getUsername(),
