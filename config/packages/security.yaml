@@ -1,4 +1,11 @@
 security:
+    encoders:
+     # use your user class name here
+        App\Entity\User:
+            # bcrypt or argon2i are recommended
+            # argon2i is more secure, but requires PHP 7.2 or the Sodium extension
+            algorithm: bcrypt
+            cost: 12
     # https://symfony.com/doc/current/security.html#where-do-users-come-from-user-providers
     providers:
         in_memory: { memory: ~ }
@@ -7,7 +14,14 @@ security:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
         main:
-            anonymous: true
+            anonymous: ~
+            logout: ~
+
+            guard:
+                authenticators:
+                    - App\Security\TokenAuthenticator
+
+            #anonymous: true
 
             # activate different ways to authenticate
 
@@ -20,5 +34,11 @@ security:
     # Easy way to control access for large sections of your site
     # Note: Only the *first* access control that matches will be used
     access_control:
-        # - { path: ^/admin, roles: ROLE_ADMIN }
-        # - { path: ^/profile, roles: ROLE_USER }
+        # allow everyone to try to log in
+        - { path: ^/api/login, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+        # to allow only the admin to modify the users
+        - { path: ^/api/users, roles: ROLE_ADMIN }
+        - { path: ^/api/user, roles: ROLE_ADMIN }
+        # to limit the api to users
+        - { path: ^/api, roles: ROLE_USER }
+        #- { path: ^/admin, roles: ROLE_ADMIN }
