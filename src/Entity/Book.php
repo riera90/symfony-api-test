@@ -10,13 +10,7 @@ use Doctrine\ORM\Mapping as ORM;
 use App\Controller\GetAllBookController;
 
 /**
- * @ApiResource(itemOperations={
- *     "GetAllBooks"={
- *         "method"="GET",
- *         "path"="/bookstest/{id}",
- *         "controller"=GetAllBookController::Class,
- *     }
- * })
+ * @ApiResource()
  * @ORM\Entity(repositoryClass="App\Repository\BookRepository")
  */
 class Book
