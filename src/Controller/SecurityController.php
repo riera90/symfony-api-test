@@ -104,7 +104,7 @@ class SecurityController extends AbstractController
         $password = $request->headers->get('password');
         $username = $request->headers->get('username');
 
-        $user = $userRepository->findOneBy(array('apiToken' => $username));
+        $user = $userRepository->findOneBy(array('username' => $username));
 
 
         if ( !$user or !$encoder->isPasswordValid($user, $password) ){
