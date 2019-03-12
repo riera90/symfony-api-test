@@ -2,10 +2,12 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Core\Annotation\ApiSubresource;
 use ApiPlatform\Core\Annotation\ApiResource;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use App\Controller\GetAllBookController;
 
 /**
  * @ApiResource()
@@ -44,6 +46,12 @@ class Book
      * @ORM\OneToMany(targetEntity="App\Entity\Review", mappedBy="book", orphanRemoval=true)
      */
     private $reviews;
+
+    /**
+     * @ORM\ManyToOne(targetEntity="App\Entity\User", inversedBy="books")
+     * @ApiSubresource(maxDepth=1)
+     */
+    private $owner;
 
     public function __construct()
     {
@@ -139,5 +147,15 @@ class Book
         return $this->getTitle();
     }
 
+    public function getOwner(): ?User
+    {
+        return $this->owner;
+    }
 
+    public function setOwner(?User $owner): self
+    {
+        $this->owner = $owner;
+
+        return $this;
+    }
 }

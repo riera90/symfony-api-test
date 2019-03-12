@@ -13,32 +13,41 @@ use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 
 class SecurityController extends AbstractController
 {
+    /**
+     * returns the token length, 32 is recommended, as the user will not interact with this, only the frontend
+     */
     private function getTokenLenght(){
         return 8;
     }
 
+
+
+
+
     /**
      * @Route("/api/register", name="register")
+     *
+     * Adds the user to the database if some conditions are meet
+     *      the username is not taken
+     *      the api key is unique
+     *
+     * Then returns the username and token of the newly registered user
      */
     public function register(Request $request, UserPasswordEncoderInterface $encoder, UserRepository $userRepository)
     {
-
-        // token length, 32 is recommended, as the user will not interact with this, only the frontend
-        $tokenLength = 8;
-
-        $user = new User();
-
-
         //checks if a request is been made
 
-        if (!$request){
+        if ( !$request ){
             $data = [
                 'message' => 'no request',
             ];
             return new JsonResponse($data, Response::HTTP_NO_CONTENT);
         }
 
-        //assigns the values to the user
+        $user = new User();
+
+
+        //assigns the correct values to the user (from the request)
 
         $user->setUsername($request->headers->get('username'));
         $plainTextPassword = $request->headers->get('password');
@@ -49,10 +58,14 @@ class SecurityController extends AbstractController
         // checks for a valid state in the user, if not an error is returned
         // an unstable object might be an already existing api key, or username
 
+        // checks for unique token
         while ( $userRepository->findBy(array('apiToken' => $user->getApiToken())) ){
             $user->setApiToken(bin2hex(openssl_random_pseudo_bytes($this->getTokenLenght())));
         }
+
+        // checks for unique username
         if ( $userRepository->findBy(array('username' => $user->getUsername())) ){
+            // if the username is already in the database, respond with a conflict
             $data = [
                 'message' => 'username already taken',
             ];
@@ -72,7 +85,6 @@ class SecurityController extends AbstractController
         $data = [
             'username' => $user->getUsername(),
             'X-AUTH-TOKEN' => $user->getApiToken(),
-            'password crypted' => $user->getPassword(),
         ];
 
         return new JsonResponse($data, Response::HTTP_CREATED);
@@ -92,7 +104,7 @@ class SecurityController extends AbstractController
         $password = $request->headers->get('password');
         $username = $request->headers->get('username');
 
-        $user = $userRepository->findOneBy(array('apiToken' => $username));
+        $user = $userRepository->findOneBy(array('username' => $username));
 
 
         if ( !$user or !$encoder->isPasswordValid($user, $password) ){
@@ -109,6 +121,10 @@ class SecurityController extends AbstractController
 
         return new JsonResponse($data, Response::HTTP_OK);
     }
+
+
+
+
 
 
     /**
